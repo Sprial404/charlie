@@ -10,7 +10,7 @@
 services:
   server:
     pull_policy: build
-    env_file: .env
+    env_file: stack.env
     build:
       context: .
 
