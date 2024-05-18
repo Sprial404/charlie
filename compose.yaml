@@ -9,6 +9,7 @@
 # https://github.com/docker/awesome-compose
 services:
   server:
+    pull_policy: build
     build:
       context: .
 
