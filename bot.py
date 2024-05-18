@@ -25,7 +25,7 @@ except TypeError:
     sys.exit(1)
 
 try:
-    token = os.getenv('DISCORD_BOT_TOKEN')
+    token = os.getenv('TOKEN')
 except TypeError:
     print('Missing environment variable DISCORD_BOT_TOKEN.', file=sys.stderr)
     sys.exit(1)
