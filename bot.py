@@ -20,6 +20,15 @@ try:
 except ValueError:
     print('Environment variable CHANNEL_ID must be an integer.', file=sys.stderr)
     sys.exit(1)
+except TypeError:
+    print('Missing environment variable CHANNEL_ID.', file=sys.stderr)
+    sys.exit(1)
+
+try:
+    token = os.getenv('DISCORD_BOT_TOKEN')
+except TypeError:
+    print('Missing environment variable DISCORD_BOT_TOKEN.', file=sys.stderr)
+    sys.exit(1)
 
 
 @client.event
@@ -72,4 +81,4 @@ async def on_message(message):
             current_count = 0
             last_user_id = None
 
-client.run(os.getenv('TOKEN'))
+client.run(token)
