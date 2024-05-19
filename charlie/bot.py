@@ -19,18 +19,18 @@ current_count = 0
 last_user_id = None
 
 try:
-    counting_channel = int(os.getenv('CHANNEL_ID'))
+    counting_channel = int(os.getenv("CHANNEL_ID"))
 except ValueError:
-    print('Environment variable CHANNEL_ID must be an integer.', file=sys.stderr)
+    print("Environment variable CHANNEL_ID must be an integer.", file=sys.stderr)
     sys.exit(1)
 except TypeError:
-    print('Missing environment variable CHANNEL_ID.', file=sys.stderr)
+    print("Missing environment variable CHANNEL_ID.", file=sys.stderr)
     sys.exit(1)
 
 try:
-    token = os.getenv('TOKEN')
+    token = os.getenv("TOKEN")
 except TypeError:
-    print('Missing environment variable DISCORD_BOT_TOKEN.', file=sys.stderr)
+    print("Missing environment variable DISCORD_BOT_TOKEN.", file=sys.stderr)
     sys.exit(1)
 
 
@@ -39,7 +39,7 @@ async def on_ready():
     """
     This function is called when the bot is ready to start receiving events.
     """
-    print(f'We have logged in as {client.user}')
+    print(f"We have logged in as {client.user}")
 
 
 @client.event
@@ -62,16 +62,16 @@ async def on_message(message: discord.Message):
             value = int(message.content)
         except ValueError:
             print(
-                f'Failed to convert message content to integer: {message.content}',
+                f"Failed to convert message content to integer: {message.content}",
                 file=sys.stderr,
             )
             return
 
         if last_user_id == message.author.id:
-            await message.add_reaction('❌')
+            await message.add_reaction("❌")
             await message.channel.send(
-                f'{message.author.mention} **RUINED THE COUNT** at {current_count}. The next number is 1. **You can\'t '
-                f'count twice in a row**'
+                f"{message.author.mention} **RUINED THE COUNT** at {current_count}. The next number is 1. **You can't "
+                f"count twice in a row**"
             )
             current_count = 0
             last_user_id = None
@@ -80,11 +80,11 @@ async def on_message(message: discord.Message):
         if value == current_count + 1:
             current_count += 1
             last_user_id = message.author.id
-            await message.add_reaction('✅')
+            await message.add_reaction("✅")
         else:
-            await message.add_reaction('❌')
+            await message.add_reaction("❌")
             await message.channel.send(
-                f'{message.author.mention} **RUINED THE COUNT** at {current_count}. The next number is 1.'
+                f"{message.author.mention} **RUINED THE COUNT** at {current_count}. The next number is 1."
             )
             current_count = 0
             last_user_id = None
