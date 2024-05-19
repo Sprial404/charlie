@@ -43,4 +43,4 @@ USER appuser
 COPY . .
 
 # Run the application.
-CMD python bot.py
+CMD python -m charlie.bot
