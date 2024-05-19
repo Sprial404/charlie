@@ -43,6 +43,9 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+
+# Data files
+data/
 nosetests.xml
 coverage.xml
 *.cover
@@ -124,6 +127,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+stack.env
 env/
 venv/
 ENV/
