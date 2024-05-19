@@ -32,12 +32,16 @@ class Count:
         count (int): The current count.
         last_user_id (Optional[int]): The ID of the last user who incremented the count.
         ignore_repeated_users (bool): Whether to ignore when the same user increments the count twice in a row.
+        highest_count (int): The highest count reached.
+        highest_count_user (Optional[int]): The ID of the user who reached the highest count.
         _mutex (threading.Lock): A mutex to ensure thread safety.
     """
 
     count: int = 0
     last_user_id: Optional[int] = None
     ignore_repeated_users: bool = False
+    highest_count: int = 0
+    highest_count_user: Optional[int] = None
     _mutex: threading.Lock = field(default_factory=threading.Lock)
 
     def to_dict(self) -> dict:
@@ -51,6 +55,8 @@ class Count:
                 "count": self.count,
                 "last_user_id": self.last_user_id,
                 "ignore_repeated_users": self.ignore_repeated_users,
+                "highest_count": self.highest_count,
+                "highest_count_user": self.highest_count_user,
             }
 
     @classmethod
@@ -61,7 +67,16 @@ class Count:
         :return: The Count object.
         """
 
-        return cls(data["count"], data["last_user_id"], data["ignore_repeated_users"])
+        highest_count = data.get("highest_count") or 0
+        highest_count_user = data.get("highest_count_user") or None
+
+        return cls(
+            data["count"],
+            data["last_user_id"],
+            data["ignore_repeated_users"],
+            highest_count,
+            highest_count_user,
+        )
 
     def reset(self):
         """
@@ -119,7 +134,7 @@ class Count:
 
         return 1
 
-    def can_increment(self, user_id: int) -> bool:
+    def can_user_increment(self, user_id: int) -> bool:
         """
         Checks if the count can be incremented by the user.
         :param user_id: The ID of the user who wants to increment the count.
@@ -132,19 +147,35 @@ class Count:
         with self._mutex:
             return self.last_user_id != user_id
 
-    def increment_to(self, value: int, user_id: int) -> bool:
+    def can_increment_to(self, value: int) -> bool:
         """
-        Increments the count to the given value if it is the next count.
+        Checks if the count can be incremented to the given value.
         :param value: The value to increment to.
-        :param user_id: The ID of the user who incremented the count.
-        :return: True if the count was incremented, False otherwise.
+        :return: True if the count can be incremented, False otherwise.
         """
-        assert self.can_increment(user_id), "User cannot increment the count."
 
         with self._mutex:
-            if value == self.next_count:
-                self.count += 1
-                self.last_user_id = user_id
+            return value == self.next_count
+
+    def increment_to(self, value: int, user_id: int) -> bool:
+        """
+        Increments the count to the given value by the user and checks if the count has beaten the highest count.
+        :param value: The value to increment to.
+        :param user_id: The ID of the user who incremented the count.
+        :return: True if the count has beaten the highest count, False otherwise.
+        """
+        assert self.can_user_increment(user_id), "User cannot increment the count."
+        assert self.can_increment_to(
+            value
+        ), "Count cannot be incremented to the given value."
+
+        with self._mutex:
+            self.count += 1
+            self.last_user_id = user_id
+
+            if self.count > self.highest_count:
+                self.highest_count = self.count
+                self.highest_count_user = user_id
                 return True
             return False
 
@@ -172,6 +203,7 @@ try:
         f"Loaded count from file {COUNT_PATH}, current count is {current_count.current_count}, next count is "
         f"{current_count.next_count}."
     )
+    current_count.save(COUNT_PATH)
 except FileNotFoundError:
     current_count = Count()
     current_count.save(COUNT_PATH)
@@ -214,12 +246,17 @@ async def on_message(message: discord.Message):
             value = int(message.content)
         except ValueError:
             print(
-                f"Failed to convert message content to integer: {message.content}",
+                f"Failed to convert message content to integer: {message.content} by {message.author.id}",
                 file=sys.stderr,
             )
+
             return
 
-        if not current_count.can_increment(message.author.id):
+        if not current_count.can_user_increment(message.author.id):
+            print(
+                f"Failed to increment count to {value} by {message.author.id}, current count was {current_count.current_count}, next number is {current_count.count_after_reset}"
+            )
+
             await message.add_reaction("❌")
             await message.channel.send(
                 f"{message.author.mention} **RUINED THE COUNT** at {current_count.current_count}. The next number is "
@@ -229,9 +266,31 @@ async def on_message(message: discord.Message):
             current_count.save(COUNT_PATH)
             return
 
-        if current_count.increment_to(value, message.author.id):
-            await message.add_reaction("✅")
+        if current_count.can_increment_to(value):
+            if current_count.increment_to(value, message.author.id):
+                print(
+                    f"New highest count: {current_count.highest_count} by {message.author.id} at "
+                    f"{current_count.current_count}, next number is {current_count.next_count}"
+                )
+
+                await message.add_reaction("🎉")
+                await message.channel.send(
+                    f"{message.author.mention} **BEAT THE HIGHEST COUNT** at {current_count.current_count}! "
+                    f"The highest count is now {current_count.highest_count} by <@{current_count.highest_count_user}>."
+                )
+            else:
+                print(
+                    f"Count incremented to {current_count.current_count} by {message.author.id}, "
+                    f"next number is {current_count.next_count}"
+                )
+
+                await message.add_reaction("✅")
         else:
+            print(
+                f"Failed to increment count to {value} by {message.author.id}, current count was "
+                f"{current_count.current_count}, next number is {current_count.count_after_reset}"
+            )
+
             await message.add_reaction("❌")
             await message.channel.send(
                 f"{message.author.mention} **RUINED THE COUNT** at {current_count.current_count}. The next number is "
