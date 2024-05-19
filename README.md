@@ -1,21 +1,23 @@
-# Discord Counting Bot
+# Charlie
 
 This is a Python program for a Discord counting bot.
 
 ## Notice
 
-Please note that this bot is a **personal project** and that support is not guaranteed. Feel free to fork the repository and modify the code to suit your needs.
+Please note that this bot is a **personal project** and that support is not guaranteed. Feel free to fork the repository
+and modify the code to suit your needs.
 
-If you encounter any issues, you can open an issue on GitHub, and I will try to address it when I have time to do so. 
+If you encounter any issues, you can open an issue on GitHub, and I will try to address it when I have time to do so.
 
-You can also submit a pull request if you have a fix or an improvement that you would like to contribute, but I cannot guarantee that it will be accepted.
+You can also submit a pull request if you have a fix or an improvement that you would like to contribute, but I cannot
+guarantee that it will be accepted.
 
 ## Features
 
- - Users can count numbers in a Discord channel.
- - Recognizes when a user counts two numbers in a row and resets the count.
- - Automatically resets the count if a user makes a mistake.
- - Records the highest count achieved by users.
+- Users can count numbers in a Discord channel.
+- Recognizes when a user counts two numbers in a row and resets the count.
+- Automatically resets the count if a user makes a mistake.
+- Records the highest count achieved by users.
 
 ## Installation
 
@@ -42,9 +44,10 @@ You can also submit a pull request if you have a fix or an improvement that you 
     CHANNEL_ID=your-discord-counting-channel-id
     ```
 
-    Replace `your-discord-bot-token` with your actual Discord bot token and `your-discord-counting-channel-id` with the ID of the Discord channel where you want the bot to operate.
+   Replace `your-discord-bot-token` with your actual Discord bot token and `your-discord-counting-channel-id` with the
+   ID of the Discord channel where you want the bot to operate.
 
-    To get the channel ID, enable Developer Mode in Discord settings, right-click on the channel, and select "Copy ID".
+   To get the channel ID, enable Developer Mode in Discord settings, right-click on the channel, and select "Copy ID".
 
 3. Run the program using the following command:
 
@@ -70,9 +73,10 @@ You can also submit a pull request if you have a fix or an improvement that you 
                 - CHANNEL_ID=your-discord-counting-channel-id
     ```
 
-3. Replace `your-discord-bot-token` with your actual Discord bot token and `your-discord-counting-channel-id` with the ID of the Discord channel where you want the bot to operate.
+3. Replace `your-discord-bot-token` with your actual Discord bot token and `your-discord-counting-channel-id` with the
+   ID of the Discord channel where you want the bot to operate.
 
-    To get the channel ID, enable Developer Mode in Discord settings, right-click on the channel, and select "Copy ID".
+   To get the channel ID, enable Developer Mode in Discord settings, right-click on the channel, and select "Copy ID".
 
 4. Run the following command to start the bot using Docker Compose:
 
@@ -80,20 +84,22 @@ You can also submit a pull request if you have a fix or an improvement that you 
     docker-compose up -d
     ```
 
-5. The bot will be running inside a Docker container. The `data` directory will be mounted as a volume, allowing you to persist data across container restarts.
+5. The bot will be running inside a Docker container. The `data` directory will be mounted as a volume, allowing you to
+   persist data across container restarts.
 
 ### Using a Named Volume
 
-If you prefer to use a named volume instead of a bind mount, you can modify the `volumes` section in the `docker-compose.yml` file as follows:
+If you prefer to use a named volume instead of a bind mount, you can modify the `volumes` section in
+the `docker-compose.yml` file as follows:
 
 ```yaml
 volumes:
-    data:
+  data:
 ```
 
 Then, replace the `volumes` section in the `bot` service with the following:
 
 ```yaml
 volumes:
-    - data:/app/data
+  - data:/app/data
 ```
