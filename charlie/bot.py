@@ -26,6 +26,8 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 
+from .leaderboard import Leaderboard
+
 COUNT_PATH = pathlib.Path().absolute() / "data" / "count.json"
 
 load_dotenv()
@@ -40,16 +42,14 @@ class Count:
         count (int): The current count.
         last_user_id (Optional[int]): The ID of the last user who incremented the count.
         ignore_repeated_users (bool): Whether to ignore when the same user increments the count twice in a row.
-        highest_count (int): The highest count reached.
-        highest_count_user (Optional[int]): The ID of the user who reached the highest count.
+        leaderboard (Leaderboard): The leaderboard.
         _mutex (threading.Lock): A mutex to ensure thread safety.
     """
 
     count: int = 0
     last_user_id: Optional[int] = None
     ignore_repeated_users: bool = False
-    highest_count: int = 0
-    highest_count_user: Optional[int] = None
+    leaderboard: Leaderboard = field(default_factory=Leaderboard)
     _mutex: threading.Lock = field(default_factory=threading.Lock)
 
     def to_dict(self) -> dict:
@@ -63,8 +63,7 @@ class Count:
                 "count": self.count,
                 "last_user_id": self.last_user_id,
                 "ignore_repeated_users": self.ignore_repeated_users,
-                "highest_count": self.highest_count,
-                "highest_count_user": self.highest_count_user,
+                "leaderboard": self.leaderboard.to_dict(),
             }
 
     @classmethod
@@ -75,15 +74,23 @@ class Count:
         :return: The Count object.
         """
 
-        highest_count = data.get("highest_count") or 0
-        highest_count_user = data.get("highest_count_user") or None
+        highest_count = data.get("highest_count")
+        highest_count_user = data.get("highest_count_user")
+
+        leaderboard = data.get("leaderboard")
+        if leaderboard is not None:
+            leaderboard = Leaderboard.from_dict(leaderboard)
+        else:
+            leaderboard = Leaderboard()
+
+        if highest_count is not None and highest_count_user is not None:
+            leaderboard.record_entry(highest_count_user, highest_count)
 
         return cls(
             data["count"],
             data["last_user_id"],
             data["ignore_repeated_users"],
-            highest_count,
-            highest_count_user,
+            leaderboard,
         )
 
     def reset(self, count: int = 0):
@@ -181,12 +188,7 @@ class Count:
         with self._mutex:
             self.count += 1
             self.last_user_id = user_id
-
-            if self.count > self.highest_count:
-                self.highest_count = self.count
-                self.highest_count_user = user_id
-                return True
-            return False
+            return self.leaderboard.record_entry(user_id, value)
 
 
 # Load environment variables
@@ -236,6 +238,9 @@ except KeyError as e:
     print(
         f"Failed to load count from file {COUNT_PATH}: Missing key {e}", file=sys.stderr
     )
+    sys.exit(1)
+except ValueError as e:
+    print(f"Failed to load count from file {COUNT_PATH}: {e}", file=sys.stderr)
     sys.exit(1)
 
 
@@ -326,17 +331,53 @@ async def on_message(message: discord.Message):
             return
 
         if current_count.can_increment_to(value):
+            highest_count = (
+                current_count.leaderboard.highest_count(message.author.id) or 0
+            )
+            current_rank = current_count.leaderboard.rank(message.author.id)
+
             if current_count.increment_to(value, message.author.id):
+                new_highest_count = current_count.leaderboard.highest_count(
+                    message.author.id
+                )
+                new_rank = current_count.leaderboard.rank(message.author.id)
+
                 print(
-                    f"New highest count: {current_count.highest_count} by {message.author.id} at "
-                    f"{current_count.current_count}, next number is {current_count.next_count}"
+                    f"User {message.author.id} has beaten their highest count, new highest count is "
+                    f"{new_highest_count}, last highest count was {highest_count}"
                 )
 
                 await message.add_reaction("🎉")
                 await message.channel.send(
-                    f"{message.author.mention} **BEAT THE HIGHEST COUNT** at {current_count.current_count}! "
-                    f"The highest count is now {current_count.highest_count} by <@{current_count.highest_count_user}>."
+                    f"{message.author.mention} **BEAT THEIR HIGHEST COUNT** at {new_highest_count}. Last personal "
+                    f"record was {highest_count}."
                 )
+
+                if current_rank is not None and new_rank < current_rank:
+                    print(
+                        f"User {message.author.id} has beaten their rank, new rank is {new_rank}, last rank was "
+                        f"{current_rank}"
+                    )
+
+                    previous_ranked_entry = current_count.leaderboard.get_entry_by_rank(
+                        new_rank + 1
+                    )
+                    if previous_ranked_entry is not None:
+                        previous_ranked_user = await message.guild.fetch_member(
+                            previous_ranked_entry.user_id
+                        )
+
+                        await message.add_reaction("🌟")
+                        await message.channel.send(
+                            f"{message.author.mention} **BEAT THEIR RANK** at #{new_rank}. Last rank was "
+                            f"#{current_rank}, beating {previous_ranked_user.mention}."
+                        )
+                    else:
+                        await message.add_reaction("⭐")
+                        await message.channel.send(
+                            f"{message.author.mention} **BEAT THEIR RANK** at #{new_rank}. Last rank was "
+                            f"#{current_rank}"
+                        )
             else:
                 print(
                     f"Count incremented to {current_count.current_count} by {message.author.id}, "
@@ -366,8 +407,6 @@ async def on_message(message: discord.Message):
 async def reset_count(interaction: discord.Interaction, count: Optional[int] = None):
     """
     Resets the count to the given count.
-    :param interaction: The interaction that triggered the command.
-    :param count: The count to reset to, defaults to 0.
     """
     global current_count
 
@@ -380,6 +419,47 @@ async def reset_count(interaction: discord.Interaction, count: Optional[int] = N
     current_count.save(COUNT_PATH)
 
     await interaction.response.send_message(f"The count has been reset to {count}.")
+
+
+@client.tree.command()
+@app_commands.guild_only()
+async def leaderboard(interaction: discord.Interaction):
+    """
+    Shows the leaderboard.
+    """
+    global current_count
+
+    if interaction.channel.id != counting_channel:
+        return
+
+    await interaction.response.defer()
+
+    entries = current_count.leaderboard.top_entries(10)
+
+    embed = discord.Embed(title="Leaderboard", color=discord.Color.blurple())
+    embed.set_footer(text="You are not ranked yet.")
+
+    personal_entry = current_count.leaderboard.get_entry(interaction.user.id)
+    if personal_entry is not None:
+        embed.set_footer(
+            text=(
+                f"{interaction.user.name}, your rank is #{personal_entry.rank}, your highest count is "
+                f"{personal_entry.highest_count}."
+            )
+        )
+
+    description = ""
+    for entry in entries:
+        user = await interaction.guild.fetch_member(entry.user_id)
+
+        description += f"`#{entry.rank}` ・ {user.mention} ・ Highest count: **{entry.highest_count}**\n"
+
+    if not description:
+        description = "No entries yet."
+
+    embed.description = description
+
+    await interaction.followup.send(embed=embed)
 
 
 client.run(token)
