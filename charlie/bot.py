@@ -266,7 +266,8 @@ async def on_message(message: discord.Message):
 
         if not current_count.can_user_increment(message.author.id):
             print(
-                f"Failed to increment count to {value} by {message.author.id}, current count was {current_count.current_count}, next number is {current_count.count_after_reset}"
+                f"Failed to increment count to {value} by {message.author.id}, current count was "
+                f"{current_count.current_count}, next number is {current_count.count_after_reset}"
             )
 
             await message.add_reaction("❌")
