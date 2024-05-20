@@ -268,8 +268,9 @@ async def on_message(message: discord.Message):
     global current_count
 
     # Ignore messages from the bot and messages from channels that are not the counting channel.
-    is_bot_message = message.author == client.user
+    is_self_message = message.author == client.user
     is_counting_channel = message.channel.id == counting_channel
+    is_bot_message = message.author.bot or is_self_message
     if is_bot_message or not is_counting_channel:
         return
 
