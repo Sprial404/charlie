@@ -23,16 +23,12 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import discord
+from discord import app_commands
 from dotenv import load_dotenv
 
 COUNT_PATH = pathlib.Path().absolute() / "data" / "count.json"
 
 load_dotenv()
-
-intents = discord.Intents.default()
-intents.message_content = True
-
-client = discord.Client(intents=intents)
 
 
 @dataclass
@@ -90,13 +86,14 @@ class Count:
             highest_count_user,
         )
 
-    def reset(self):
+    def reset(self, count: int = 0):
         """
-        Resets the count to 0 and clears the last user ID.
+        Resets the count to the given count and clears the last user ID.
+        :param count: The count to reset to.
         """
 
         with self._mutex:
-            self.count = 0
+            self.count = count
             self.last_user_id = None
 
     def save(self, path):
@@ -209,6 +206,16 @@ if token is None:
     print("Missing environment variable TOKEN.", file=sys.stderr)
     sys.exit(1)
 
+if (testing_guild := os.getenv("TESTING_GUILD")) is not None:
+    try:
+        testing_guild_id = discord.Object(int(testing_guild))
+    except ValueError:
+        print("Environment variable TESTING_GUILD must be an integer.", file=sys.stderr)
+        sys.exit(1)
+else:
+    testing_guild_id = None
+
+# Create the data directory if it doesn't exist and load the count from the file.
 os.makedirs(COUNT_PATH.parent, exist_ok=True)
 
 try:
@@ -251,6 +258,31 @@ def parse_message(message: str) -> Optional[int]:
         return None
 
     return int(number)
+
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+
+class Client(discord.Client):
+    """
+    A subclass of discord.Client that includes a command tree.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tree = app_commands.CommandTree(self)
+
+    async def setup_hook(self) -> None:
+        # Copy the global commands to the testing guild if it exists or sync all commands globally.
+        if testing_guild_id is not None:
+            self.tree.copy_global_to(guild=testing_guild_id)
+            await self.tree.sync(guild=testing_guild_id)
+        else:
+            await self.tree.sync()
+
+
+client = Client(intents=intents)
 
 
 @client.event
@@ -326,6 +358,28 @@ async def on_message(message: discord.Message):
             current_count.reset()
 
         current_count.save(COUNT_PATH)
+
+
+@client.tree.command()
+@app_commands.guild_only()
+@app_commands.default_permissions(manage_messages=True)
+async def reset_count(interaction: discord.Interaction, count: Optional[int] = None):
+    """
+    Resets the count to the given count.
+    :param interaction: The interaction that triggered the command.
+    :param count: The count to reset to, defaults to 0.
+    """
+    global current_count
+
+    if interaction.channel.id != counting_channel:
+        return
+
+    count = count or 0
+
+    current_count.reset(count)
+    current_count.save(COUNT_PATH)
+
+    await interaction.response.send_message(f"The count has been reset to {count}.")
 
 
 client.run(token)
