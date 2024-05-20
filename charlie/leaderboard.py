@@ -133,7 +133,8 @@ class Leaderboard:
                 del self.entries[index]
                 self.entries.insert(new_index, entry)
                 self._reindex()
-                return True
+
+            return True
 
         return False
 
