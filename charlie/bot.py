@@ -17,6 +17,7 @@ This module contains the code for the Discord bot that will be used to count in 
 import json
 import os
 import pathlib
+import signal
 import sys
 import threading
 from dataclasses import dataclass, field
@@ -288,6 +289,17 @@ class Client(discord.Client):
 client = Client(intents=intents)
 
 
+# Handle SIGINT and SIGTERM signals to save the count before exiting.
+def signal_handler(_sig, _frame):
+    current_count.save(COUNT_PATH)
+    client.loop.create_task(client.close())
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
+
 @client.event
 async def on_ready():
     """
@@ -373,7 +385,7 @@ async def on_message(message: discord.Message):
                         )
                     else:
                         await message.add_reaction("⭐")
-                        content += f"\nAnd, also **BEAT THgitEIR RANK** at #{new_rank}. Last rank was #{current_rank}."
+                        content += f"\nAnd, also **BEAT THEIR RANK** at #{new_rank}. Last rank was #{current_rank}."
 
                 await message.channel.send(content)
             else:

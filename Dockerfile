@@ -47,4 +47,4 @@ USER appuser
 COPY . .
 
 # Run the application.
-CMD python -m charlie.bot
+ENTRYPOINT ["python", "-m", "charlie.bot"]
