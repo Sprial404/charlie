@@ -346,7 +346,8 @@ async def on_message(message: discord.Message):
                 )
 
                 await message.add_reaction("🎉")
-                await message.channel.send(
+
+                message = (
                     f"{message.author.mention} **BEAT THEIR HIGHEST COUNT** at {new_highest_count}. Last personal "
                     f"record was {highest_count}."
                 )
@@ -354,7 +355,7 @@ async def on_message(message: discord.Message):
                 if current_rank is not None and new_rank < current_rank:
                     print(
                         f"User {message.author.id} has beaten their rank, new rank is {new_rank}, last rank was "
-                        f"{current_rank}"
+                        f"{current_rank}."
                     )
 
                     previous_ranked_entry = current_count.leaderboard.get_entry_by_rank(
@@ -366,16 +367,15 @@ async def on_message(message: discord.Message):
                         )
 
                         await message.add_reaction("🌟")
-                        await message.channel.send(
-                            f"{message.author.mention} **BEAT THEIR RANK** at #{new_rank}. Last rank was "
-                            f"#{current_rank}, beating {previous_ranked_user.mention}."
+                        message += (
+                            f"\nAnd, also **BEAT THEIR RANK** at #{new_rank}. Last rank was #{current_rank}, "
+                            f"beating {previous_ranked_user.mention}."
                         )
                     else:
                         await message.add_reaction("⭐")
-                        await message.channel.send(
-                            f"{message.author.mention} **BEAT THEIR RANK** at #{new_rank}. Last rank was "
-                            f"#{current_rank}"
-                        )
+                        message += f"\nAnd, also **BEAT THEIR RANK** at #{new_rank}. Last rank was #{current_rank}."
+
+                await message.channel.send(message)
             else:
                 print(
                     f"Count incremented to {current_count.current_count} by {message.author.id}, "
