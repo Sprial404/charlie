@@ -230,6 +230,27 @@ except KeyError as e:
     sys.exit(1)
 
 
+def parse_message(message: str) -> Optional[int]:
+    """
+    Parses a message and returns the number in the message if any.
+    :param message: The message to parse.
+    :return: The number in the message if any, None otherwise.
+    """
+    if len(message) == 0:
+        return None
+
+    i = 0
+    number = ""
+    while i < len(message) and message[i].isdigit():
+        number += message[i]
+        i += 1
+
+    if len(number) == 0:
+        return None
+
+    return int(number)
+
+
 @client.event
 async def on_ready():
     """
@@ -253,17 +274,7 @@ async def on_message(message: discord.Message):
         return
 
     # Check if the message is a number.
-    if message.content.isnumeric():
-        try:
-            value = int(message.content)
-        except ValueError:
-            print(
-                f"Failed to convert message content to integer: {message.content} by {message.author.id}",
-                file=sys.stderr,
-            )
-
-            return
-
+    if (value := parse_message(message.content)) is not None:
         if not current_count.can_user_increment(message.author.id):
             print(
                 f"Failed to increment count to {value} by {message.author.id}, current count was "
