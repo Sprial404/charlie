@@ -192,19 +192,21 @@ class Count:
             return False
 
 
-try:
-    counting_channel = int(os.getenv("CHANNEL_ID"))
-except ValueError:
-    print("Environment variable CHANNEL_ID must be an integer.", file=sys.stderr)
-    sys.exit(1)
-except TypeError:
+# Load environment variables
+if (channel_id := os.getenv("CHANNEL_ID")) is not None:
+    try:
+        counting_channel = int(channel_id)
+    except ValueError:
+        print("Environment variable CHANNEL_ID must be an integer.", file=sys.stderr)
+        sys.exit(1)
+else:
     print("Missing environment variable CHANNEL_ID.", file=sys.stderr)
     sys.exit(1)
 
-try:
-    token = os.getenv("TOKEN")
-except TypeError:
-    print("Missing environment variable DISCORD_BOT_TOKEN.", file=sys.stderr)
+token = os.getenv("TOKEN")
+
+if token is None:
+    print("Missing environment variable TOKEN.", file=sys.stderr)
     sys.exit(1)
 
 os.makedirs(COUNT_PATH.parent, exist_ok=True)
