@@ -38,12 +38,10 @@ class Count:
     """
     A class that represents the count and the last user ID who incremented the count.
 
-    Attributes:
-        count (int): The current count.
-        last_user_id (Optional[int]): The ID of the last user who incremented the count.
-        ignore_repeated_users (bool): Whether to ignore when the same user increments the count twice in a row.
-        leaderboard (Leaderboard): The leaderboard.
-        _mutex (threading.Lock): A mutex to ensure thread safety.
+    :cvar count: The current count.
+    :cvar last_user_id: The ID of the last user who incremented the count.
+    :cvar ignore_repeated_users: Whether to ignore when the same user increments the count twice in a row.
+    :cvar leaderboard: The leaderboard.
     """
 
     count: int = 0
