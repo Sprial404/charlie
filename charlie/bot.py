@@ -347,7 +347,7 @@ async def on_message(message: discord.Message):
 
                 await message.add_reaction("🎉")
 
-                message = (
+                content = (
                     f"{message.author.mention} **BEAT THEIR HIGHEST COUNT** at {new_highest_count}. Last personal "
                     f"record was {highest_count}."
                 )
@@ -367,15 +367,15 @@ async def on_message(message: discord.Message):
                         )
 
                         await message.add_reaction("🌟")
-                        message += (
+                        content += (
                             f"\nAnd, also **BEAT THEIR RANK** at #{new_rank}. Last rank was #{current_rank}, "
                             f"beating {previous_ranked_user.mention}."
                         )
                     else:
                         await message.add_reaction("⭐")
-                        message += f"\nAnd, also **BEAT THEIR RANK** at #{new_rank}. Last rank was #{current_rank}."
+                        content += f"\nAnd, also **BEAT THgitEIR RANK** at #{new_rank}. Last rank was #{current_rank}."
 
-                await message.channel.send(message)
+                await message.channel.send(content)
             else:
                 print(
                     f"Count incremented to {current_count.current_count} by {message.author.id}, "
