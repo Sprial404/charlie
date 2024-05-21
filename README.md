@@ -94,12 +94,12 @@ the `docker-compose.yml` file as follows:
 
 ```yaml
 volumes:
-  data:
+    data:
 ```
 
 Then, replace the `volumes` section in the `bot` service with the following:
 
 ```yaml
 volumes:
-  - data:/app/data
+    - data:/app/data
 ```
