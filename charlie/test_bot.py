@@ -15,5 +15,5 @@ def add(a: int, b: int) -> int:
     return a + b
 
 
-def test_it_works():
+def test_it_works() -> None:
     assert add(1, 2) == 3

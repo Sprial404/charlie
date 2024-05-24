@@ -92,7 +92,7 @@ class Count:
             leaderboard,
         )
 
-    def reset(self, count: int = 0):
+    def reset(self, count: int = 0) -> None:
         """
         Resets the count to the given count and clears the last user ID.
         :param count: The count to reset to.
@@ -102,7 +102,7 @@ class Count:
             self.count = count
             self.last_user_id = None
 
-    def save(self, path):
+    def save(self, path) -> None:
         """
         Saves the count to a file.
         :param path: The path to the file.
@@ -290,8 +290,19 @@ client = Client(intents=intents)
 
 
 # Handle SIGINT and SIGTERM signals to save the count before exiting.
-def signal_handler(_sig, _frame):
+def signal_handler(_sig, _frame) -> None:
+    """
+    Handles the SIGINT and SIGTERM signals to save the count before exiting.
+
+    :param _sig: The signal number.
+    :param _frame: The current stack frame.
+    """
     current_count.save(COUNT_PATH)
+
+    if testing_guild_id is not None:
+        client.tree.clear_commands(guild=testing_guild_id)
+        client.loop.run_until_complete(client.tree.sync(guild=testing_guild_id))
+
     client.loop.create_task(client.close())
     sys.exit(0)
 
@@ -301,7 +312,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 
 @client.event
-async def on_ready():
+async def on_ready() -> None:
     """
     This function is called when the bot is ready to start receiving events.
     """
@@ -309,7 +320,7 @@ async def on_ready():
 
 
 @client.event
-async def on_message(message: discord.Message):
+async def on_message(message: discord.Message) -> None:
     """
     This function is called when a message is sent in a channel that the bot has access to.
     :param message: The message that was sent.
@@ -414,9 +425,14 @@ async def on_message(message: discord.Message):
 @client.tree.command()
 @app_commands.guild_only()
 @app_commands.default_permissions(manage_messages=True)
-async def reset_count(interaction: discord.Interaction, count: Optional[int] = None):
+async def reset_count(
+    interaction: discord.Interaction, count: Optional[int] = None
+) -> None:
     """
     Resets the count to the given count.
+
+    :param interaction: The interaction that triggered the command.
+    :param count: The count to reset to.
     """
     global current_count
 
@@ -433,9 +449,11 @@ async def reset_count(interaction: discord.Interaction, count: Optional[int] = N
 
 @client.tree.command()
 @app_commands.guild_only()
-async def leaderboard(interaction: discord.Interaction):
+async def leaderboard(interaction: discord.Interaction) -> None:
     """
     Shows the leaderboard.
+
+    :param interaction: The interaction that triggered the command.
     """
     global current_count
 
