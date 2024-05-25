@@ -243,14 +243,52 @@ except ValueError as e:
     sys.exit(1)
 
 
-def parse_message(message: str) -> Optional[int]:
+def is_roman_numeral(c: str) -> bool:
     """
-    Parses a message and returns the number in the message if any.
+    Checks if a character is a Roman numeral.
+    :param c: The character to check.
+    :return: True if the character is a Roman numeral, False otherwise.
+    """
+    return c in "IVXLCDM"
+
+
+def parse_roman_numeral(message: str) -> Optional[int]:
+    """
+    Parses a Roman numeral from the message ignoring any non-Roman numeral characters.
+    :param message: The message to parse.
+    :return: The value of the Roman numeral if any, None otherwise.
+    """
+
+    NUMERALS = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
+
+    i = 0
+    lexeme = ""
+    while i < len(message) and is_roman_numeral(message[i]):
+        lexeme += message[i]
+        i += 1
+
+    if len(lexeme) == 0:
+        return None
+
+    i = 0
+    value = 0
+    while i < len(lexeme):
+        if i + 1 < len(lexeme) and NUMERALS[lexeme[i]] < NUMERALS[lexeme[i + 1]]:
+            value += NUMERALS[lexeme[i + 1]] - NUMERALS[lexeme[i]]
+            i += 2
+        else:
+            value += NUMERALS[lexeme[i]]
+            i += 1
+
+    return value
+
+
+def parse_number(message: str) -> Optional[int]:
+    """
+    Parses a number from the message ignoring any non-digit characters.
     :param message: The message to parse.
     :return: The number in the message if any, None otherwise.
     """
-    if len(message) == 0:
-        return None
 
     i = 0
     number = ""
@@ -262,6 +300,22 @@ def parse_message(message: str) -> Optional[int]:
         return None
 
     return int(number)
+
+
+def parse_message(message: str) -> Optional[int]:
+    """
+    Parses a message and returns the number in the message if any.
+    :param message: The message to parse.
+    :return: The number in the message if any, None otherwise.
+    """
+    if len(message) == 0:
+        return None
+
+    ch = message[0]
+    if ch.isdigit():
+        return parse_number(message)
+    elif is_roman_numeral(ch):
+        return parse_roman_numeral(message)
 
 
 intents = discord.Intents.default()
