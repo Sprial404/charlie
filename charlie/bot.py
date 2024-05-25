@@ -292,12 +292,21 @@ def parse_number(message: str) -> Optional[int]:
 
     i = 0
     number = ""
-    while i < len(message) and message[i].isdigit():
+    while i < len(message) and message[i].isalnum():
         number += message[i]
         i += 1
 
     if len(number) == 0:
         return None
+
+    if number.startswith("0"):
+        if len(number) > 2:
+            if number[1] == "x":
+                return int(number, 16)
+            elif number[1] == "b":
+                return int(number, 2)
+            elif number[1] == "o":
+                return int(number, 8)
 
     return int(number)
 
@@ -312,10 +321,13 @@ def parse_message(message: str) -> Optional[int]:
         return None
 
     ch = message[0]
-    if ch.isdigit():
-        return parse_number(message)
-    elif is_roman_numeral(ch):
-        return parse_roman_numeral(message)
+    try:
+        if ch.isdigit():
+            return parse_number(message)
+        elif is_roman_numeral(ch):
+            return parse_roman_numeral(message)
+    except ValueError:
+        return None
 
 
 intents = discord.Intents.default()
