@@ -1,7 +1,0 @@
-<component name="CopyrightManager">
-  <copyright>
-    <option name="keyword" value="This file is part of" />
-    <option name="notice" value="This file is part of &amp;#36;project.name.&#10;&#10;&amp;#36;project.name is free software: you can redistribute it and/or modify it under the terms of the GNU General Public&#10;License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any&#10;later version.&#10;&#10;&amp;#36;project.name is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied&#10;warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.&#10;&#10;You should have received a copy of the GNU General Public License along with &amp;#36;project.name. If not,&#10;see &lt;https://www.gnu.org/licenses/&gt;." />
-    <option name="myName" value="GNU General Public License Version 3 or Later" />
-  </copyright>
-</component>
