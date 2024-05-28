@@ -429,15 +429,11 @@ async def on_message(message: discord.Message) -> None:
                 )
                 new_rank = current_count.leaderboard.rank(message.author.id)
 
-                print(
-                    f"User {message.author.id} has beaten their highest count"
-                )
+                print(f"User {message.author.id} has beaten their highest count")
 
                 await message.add_reaction("🎉")
 
-                content = (
-                    f"{message.author.mention} **BEAT THEIR HIGHEST COUNT**."
-                )
+                content = f"{message.author.mention} **BEAT THEIR HIGHEST COUNT**."
 
                 if current_rank is not None and new_rank < current_rank:
                     print(
