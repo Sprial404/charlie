@@ -324,8 +324,8 @@ def parse_message(message: str) -> Optional[int]:
     try:
         if ch.isdigit():
             return parse_number(message)
-        elif is_roman_numeral(ch):
-            return parse_roman_numeral(message)
+        # elif is_roman_numeral(ch):
+        #     return parse_roman_numeral(message)
     except ValueError:
         return None
 
